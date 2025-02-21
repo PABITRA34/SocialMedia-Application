@@ -1,0 +1,26 @@
+# Ignore Maven & Gradle build files
+target/
+build/
+*.jar
+*.war
+*.ear
+
+# Ignore local configuration files
+HELP.md
+
+# Ignore IDE-specific files
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.sts4-cache
+.springBeans
+
+# Ignore logs and temp files
+logs/
+*.log
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
