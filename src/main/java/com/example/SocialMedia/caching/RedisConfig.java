@@ -42,7 +42,9 @@ package com.example.SocialMedia.caching;//package com.example.SocialMedia.cachin
 
 
 
+import com.example.SocialMedia.dtos.PostDTO;
 import com.example.SocialMedia.dtos.UserDTO;
+import com.example.SocialMedia.entities.Post;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -77,6 +79,18 @@ public class RedisConfig {
         template.setKeySerializer(new StringRedisSerializer());
 
         // Set value serializer
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+
+        template.afterPropertiesSet();
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, PostDTO> postDTORedisTemplate(RedisConnectionFactory connectionFactory){
+        RedisTemplate<String, PostDTO> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+
+        template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
 
         template.afterPropertiesSet();

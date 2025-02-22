@@ -67,6 +67,13 @@
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+			<version>2.15.0</version>  <!-- Ensure it matches your other Jackson versions -->
+		</dependency>
+
+
 
 		<dependency>
 			<groupId>org.modelmapper</groupId>
