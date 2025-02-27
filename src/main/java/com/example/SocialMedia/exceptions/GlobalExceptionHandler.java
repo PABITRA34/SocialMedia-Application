@@ -21,11 +21,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> handleGenericException(Exception e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Something went wrong"));
-    }
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<?> handleGenericException(Exception e) {
+//        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+//                .body(ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR,
+//                        "Something went wrong"));
+//    }
 
 }

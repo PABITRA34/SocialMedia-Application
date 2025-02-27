@@ -55,6 +55,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -70,22 +71,35 @@ public class UserController {
 
     private static final String USER_KEY_PREFIX = "USER_";
 
-    @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getUser(@PathVariable Long id) {
-//        String redisKey = USER_KEY_PREFIX + id;
+//    @GetMapping("/{id}")
+//    public ResponseEntity<UserDTO> getUser(@PathVariable Long id) {
+////        String redisKey = USER_KEY_PREFIX + id;
+////
+////        // Check if user exists in Redis
+////        UserDTO cachedUser = (UserDTO) redisTemplate.opsForValue().get(redisKey);
+////
+////        if (cachedUser != null) {
+////            System.out.println("returning from Redis Cache");
+////            return ResponseEntity.ok(cachedUser);
+////        }
 //
-//        // Check if user exists in Redis
-//        UserDTO cachedUser = (UserDTO) redisTemplate.opsForValue().get(redisKey);
-//
-//        if (cachedUser != null) {
-//            System.out.println("returning from Redis Cache");
-//            return ResponseEntity.ok(cachedUser);
-//        }
+//        // Fetch from DB and cache it
+//        UserDTO user = userService.getUserById(id);
+////        redisTemplate.opsForValue().set(redisKey, user, 10, TimeUnit.MINUTES);
+////        System.out.println("fetched from db");
+//        return ResponseEntity.ok(user);
+//    }
 
-        // Fetch from DB and cache it
-        UserDTO user = userService.getUserById(id);
-//        redisTemplate.opsForValue().set(redisKey, user, 10, TimeUnit.MINUTES);
-//        System.out.println("fetched from db");
+    @GetMapping("/{id}")
+    public ResponseEntity<UserDTO> getUser(@PathVariable Long id,  @RequestHeader("Authorization") String token) {
+
+        UserDTO user = null;
+        try {
+            user = userService.getUserById(id, token).getBody();
+        } catch (AccessDeniedException e) {
+            throw new RuntimeException(e);
+        }
+
         return ResponseEntity.ok(user);
     }
 
@@ -101,12 +115,11 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-//    @PostMapping("/login")
-//    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
-//        UserDTO user = userService.loginUser(userDTO);
-//        redisTemplate.opsForValue().set(USER_KEY_PREFIX + user.getId(), user, 10, TimeUnit.MINUTES);
-//        return ResponseEntity.ok(user);
-//    }
+    @PostMapping("/login")
+    public ResponseEntity<String> loginUser(@RequestBody UserDTO userDTO) {
+        System.out.println("entered login");
+        return ResponseEntity.ok(userService.verify(userDTO));
+    }
 
     @PutMapping("/{id}")
     public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {

@@ -197,20 +197,23 @@ import com.example.SocialMedia.entities.User;
 import com.example.SocialMedia.exceptions.DuplicateResourceException;
 import com.example.SocialMedia.exceptions.UserNotFoundException;
 import com.example.SocialMedia.repository.UserRepository;
+import com.example.SocialMedia.security.JWTService;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 
-import java.util.Collections;
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -229,6 +232,12 @@ public class UserService  {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    private JWTService jwtService;
+
+    @Autowired
+    private AuthenticationManager authManager;
 
 
 
@@ -264,32 +273,69 @@ public class UserService  {
         return convertToDTO(savedUser);
     }
 
-    public UserDTO loginUser(UserDTO userDTO){
-        User  user = modelMapper.map(userDTO, User.class);
-        user.setPassword(new BCryptPasswordEncoder().encode(userDTO.getPassword()));
-        User savedUser = userRepository.save(user);
+    public String verify(UserDTO userDTO) {
+        User user = userRepository.findByUserName(userDTO.getUserName());
+//
+//        // Check if the entered password matches the stored hashed password
+//        if (!new BCryptPasswordEncoder().matches(userDTO.getPassword(), user.getPassword())) {
+//            throw new UserNotFoundException("Invalid username or password");
+//        }
+//        // Return user details if login is successful
+//        return convertToDTO(user);
 
-        return convertToDTO(savedUser);
+        Authentication authentication =
+                authManager.authenticate(new UsernamePasswordAuthenticationToken(userDTO.getUserName(), userDTO.getPassword()));
+
+        if(authentication.isAuthenticated()){
+            System.out.println("auth success");
+            return jwtService.generateToken(user.getUserName());
+        }
+        return "Wrong UserName or Password";
     }
 
-    public UserDTO getUserById(Long userId) {
-        String cacheKey = USER_CACHE_PREFIX + userId;
 
-        // Check if user exists in Redis cache
-        UserDTO cachedUser = (UserDTO) redisTemplate.opsForValue().get(cacheKey);
-        if (cachedUser != null) {
-            System.out.println("returned from the cache");
-            return cachedUser; // Return cached user if present
-        }
+//    public UserDTO getUserById(Long userId) {
+//        String cacheKey = USER_CACHE_PREFIX + userId;
+//
+//        // Check if user exists in Redis cache
+//        UserDTO cachedUser = (UserDTO) redisTemplate.opsForValue().get(cacheKey);
+//        if (cachedUser != null) {
+//            System.out.println("returned from the cache");
+//            return cachedUser; // Return cached user if present
+//        }
+//
+//        // Fetch from DB and cache it
+//        User user = userRepository.findById(userId)
+//                .orElseThrow(() -> new UserNotFoundException("User not found"));
+//
+//        UserDTO userDTO = convertToDTO(user);
+//        System.out.println("fetched from the db");
+//        redisTemplate.opsForValue().set(cacheKey, userDTO, 10, TimeUnit.MINUTES);
+//        return userDTO;
+//    }
 
-        // Fetch from DB and cache it
-        User user = userRepository.findById(userId)
+
+    public ResponseEntity<UserDTO> getUserById(Long id,  String token) throws AccessDeniedException {
+        /*String usernameFromToken = jwtService.extractUserName(token.substring(7));  // Remove "Bearer " prefix
+
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        UserDTO userDTO = convertToDTO(user);
-        System.out.println("fetched from the db");
-        redisTemplate.opsForValue().set(cacheKey, userDTO, 10, TimeUnit.MINUTES);
-        return userDTO;
+        if (!user.getUserName().equals(usernameFromToken)) {
+            System.out.println("Unauthorised");
+            throw new AccessDeniedException("You are not authorized to access this resource");
+        }
+
+        return ResponseEntity.ok(convertToDTO(user)); */
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userName= authentication.getName();
+        User userInDb=  userRepository.findByUserName(userName);
+        if(userInDb !=null  && userInDb.getUserName()==userName){
+            return new ResponseEntity<>(convertToDTO(userInDb),HttpStatus.OK);
+        }
+        System.out.println("failed");
+        return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
 
     public List<UserDTO> getAllUsers() {
