@@ -205,6 +205,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -215,15 +217,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
-public class UserService implements UserDetailsService {
+public class UserService  {
 
     private static final String USER_CACHE_PREFIX = "user:"; // Prefix for Redis keys
 
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+//    @Autowired
+//    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -233,17 +235,17 @@ public class UserService implements UserDetailsService {
     @Autowired
     private RedisTemplate<String, UserDTO> redisTemplate; // Inject Redis
 
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUserName(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-        return new org.springframework.security.core.userdetails.User(
-                user.getUserName(),
-                user.getPassword(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
-        );
-    }
+//    @Override
+//    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+//        User user = userRepository.findByUserName(username)
+//                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+//
+//        return new org.springframework.security.core.userdetails.User(
+//                user.getUserName(),
+//                user.getPassword(),
+//                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+//        );
+//    }
 
     @Transactional
     public synchronized UserDTO createUser(UserDTO userDTO) {
@@ -252,12 +254,20 @@ public class UserService implements UserDetailsService {
         }
 
         User user = modelMapper.map(userDTO, User.class);
-        user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
-
+//        user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+          user.setPassword(new BCryptPasswordEncoder().encode(userDTO.getPassword()));
         User savedUser = userRepository.save(user);
 
         // Cache the user
 //        saveUserInCache(savedUser);
+
+        return convertToDTO(savedUser);
+    }
+
+    public UserDTO loginUser(UserDTO userDTO){
+        User  user = modelMapper.map(userDTO, User.class);
+        user.setPassword(new BCryptPasswordEncoder().encode(userDTO.getPassword()));
+        User savedUser = userRepository.save(user);
 
         return convertToDTO(savedUser);
     }

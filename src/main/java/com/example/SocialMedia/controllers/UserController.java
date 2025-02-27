@@ -94,12 +94,19 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    @PostMapping
+    @PostMapping("/register")
     public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
         UserDTO user = userService.createUser(userDTO);
         redisTemplate.opsForValue().set(USER_KEY_PREFIX + user.getId(), user, 10, TimeUnit.MINUTES);
         return ResponseEntity.ok(user);
     }
+
+//    @PostMapping("/login")
+//    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
+//        UserDTO user = userService.loginUser(userDTO);
+//        redisTemplate.opsForValue().set(USER_KEY_PREFIX + user.getId(), user, 10, TimeUnit.MINUTES);
+//        return ResponseEntity.ok(user);
+//    }
 
     @PutMapping("/{id}")
     public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
