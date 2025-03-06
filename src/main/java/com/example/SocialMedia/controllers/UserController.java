@@ -1,54 +1,8 @@
-//package com.example.SocialMedia.controllers;
-//
-//import com.example.SocialMedia.dtos.UserDTO;
-//import com.example.SocialMedia.entities.User;
-//import com.example.SocialMedia.services.UserService;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.http.HttpStatus;
-//import org.springframework.http.ResponseEntity;
-//import org.springframework.web.bind.annotation.*;
-//
-//import java.util.List;
-//
-//@RestController
-//@RequestMapping("api/users")
-//public class UserController {
-//
-//    @Autowired
-//    private UserService userService;
-//
-//    @GetMapping("/{id}")
-//    public ResponseEntity<UserDTO> getUser(@PathVariable Long id){
-//        return ResponseEntity.ok(userService.getUserById(id));
-//    }
-//
-//    @GetMapping
-//    public ResponseEntity<List<UserDTO>> getAllUsers(){
-//        return ResponseEntity.ok(userService.getAllUsers());
-//    }
-//
-//    @PostMapping
-//    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO){
-//        UserDTO user = userService.createUser(userDTO);
-//        return ResponseEntity.ok(user);
-//    }
-//
-//    @PutMapping("/{id}")
-//    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO){
-//        return ResponseEntity.ok(userService.updateUser(id,userDTO));
-//    }
-//
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<String> deleteUser(@PathVariable Long id){
-//        userService.deleteUser(id);
-//        return ResponseEntity.ok("user deleted successfully");
-//    }
-//}
-
-
 package com.example.SocialMedia.controllers;
 
+import com.example.SocialMedia.dtos.LoginRequestDTO;
 import com.example.SocialMedia.dtos.UserDTO;
+import com.example.SocialMedia.entities.User;
 import com.example.SocialMedia.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -71,67 +25,42 @@ public class UserController {
 
     private static final String USER_KEY_PREFIX = "USER_";
 
-//    @GetMapping("/{id}")
-//    public ResponseEntity<UserDTO> getUser(@PathVariable Long id) {
-////        String redisKey = USER_KEY_PREFIX + id;
-////
-////        // Check if user exists in Redis
-////        UserDTO cachedUser = (UserDTO) redisTemplate.opsForValue().get(redisKey);
-////
-////        if (cachedUser != null) {
-////            System.out.println("returning from Redis Cache");
-////            return ResponseEntity.ok(cachedUser);
-////        }
-//
-//        // Fetch from DB and cache it
-//        UserDTO user = userService.getUserById(id);
-////        redisTemplate.opsForValue().set(redisKey, user, 10, TimeUnit.MINUTES);
-////        System.out.println("fetched from db");
-//        return ResponseEntity.ok(user);
-//    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getUser(@PathVariable Long id,  @RequestHeader("Authorization") String token) {
-
-        UserDTO user = null;
-        try {
-            user = userService.getUserById(id, token).getBody();
-        } catch (AccessDeniedException e) {
-            throw new RuntimeException(e);
-        }
-
-        return ResponseEntity.ok(user);
-    }
-
-    @GetMapping
+    @GetMapping("/getAll")
     public ResponseEntity<List<UserDTO>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
+    @GetMapping("/get/{uId}")
+    public ResponseEntity<UserDTO> getUserById(@PathVariable Long uId) throws AccessDeniedException {
+        return ResponseEntity.ok(userService.getUserById(uId));
+    }
+
     @PostMapping("/register")
-    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
-        UserDTO user = userService.createUser(userDTO);
-        redisTemplate.opsForValue().set(USER_KEY_PREFIX + user.getId(), user, 10, TimeUnit.MINUTES);
-        return ResponseEntity.ok(user);
+    public ResponseEntity<UserDTO> createUser(@RequestBody User user) {
+         userService.createUser(user);
+        UserDTO userDTO = userService.convertToDTO(user);
+        redisTemplate.opsForValue().set(USER_KEY_PREFIX + user.getId(), userDTO, 10, TimeUnit.MINUTES);
+        return ResponseEntity.ok(userDTO);
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<String> loginUser(@RequestBody UserDTO userDTO) {
-        System.out.println("entered login");
-        return ResponseEntity.ok(userService.verify(userDTO));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
-        UserDTO updatedUser = userService.updateUser(id, userDTO);
-        redisTemplate.opsForValue().set(USER_KEY_PREFIX + id, updatedUser, 10, TimeUnit.MINUTES);
+    @PutMapping("/update")
+    public ResponseEntity<UserDTO> updateUser( @RequestBody UserDTO userDTO) {
+        UserDTO updatedUser = userService.updateUser( userDTO);
+//        redisTemplate.opsForValue().set(USER_KEY_PREFIX + id, updatedUser, 10, TimeUnit.MINUTES);
         return ResponseEntity.ok(updatedUser);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
-        redisTemplate.delete(USER_KEY_PREFIX + id); // Remove from cache
+    @PostMapping("/login")
+    public  ResponseEntity<String> loginUser(@RequestBody LoginRequestDTO loginRequestDTO){
+        System.out.println("controlllller");
+        return ResponseEntity.ok(userService.verify(loginRequestDTO));
+    }
+
+
+    @DeleteMapping("/delete")
+    public ResponseEntity<String> deleteUser() {
+        userService.deleteUser();
+//        redisTemplate.delete(USER_KEY_PREFIX + id); // Remove from cache
         return ResponseEntity.ok("User deleted successfully");
     }
 }
