@@ -7,20 +7,37 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class UserPrincipal implements UserDetails {
 
     private User user;
+    private List<GrantedAuthority> authorities; //atz
 
     public UserPrincipal(User user){
         this.user = user;
+        this.authorities = user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .collect(Collectors.toList());
     }
 
+//    @Override
+//    public Collection<? extends GrantedAuthority> getAuthorities() {
+//        return Collections.singleton(new SimpleGrantedAuthority(("USER")));
+//    }
+//    @Override
+//    public Collection<? extends GrantedAuthority> getAuthorities() {
+//        return user.getRoles().stream()  // Get the user's roles
+//                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName())) // Map roles to Spring Security's SimpleGrantedAuthority
+//                .collect(Collectors.toList());
+//    }
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singleton(new SimpleGrantedAuthority(("USER")));
+        return authorities;
     }
+
 
     @Override
     public String getPassword() {

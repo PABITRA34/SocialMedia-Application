@@ -1,67 +1,8 @@
-//package com.example.SocialMedia.entities;
-//
-//import jakarta.persistence.*;
-//import lombok.*;
-//
-//import java.time.LocalDateTime;
-//import java.util.ArrayList;
-//import java.util.List;
-//
-//@Entity
-//@Table(name = "users")
-//@Getter
-//@Setter
-//@NoArgsConstructor
-//@AllArgsConstructor
-//public class User {
-//
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
-//    private Long id;
-//
-//    @Column(nullable = false,  length = 50)
-//    private String userName;
-//
-//    @Column(nullable = false)
-//    private String email;
-//
-////    @Column(nullable = false)
-////    private String password;
-//
-//
-//    private LocalDateTime createdAt = LocalDateTime.now();
-//
-//    private String profilePicture;
-//    private String bio;
-//
-//    // Follow relationships
-//    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<Follow> following = new ArrayList<>();
-//
-//    @OneToMany(mappedBy = "following", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<Follow> followers = new ArrayList<>();
-//
-//    // Posts relationship
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<Post> posts = new ArrayList<>();
-//
-//    // Comments relationship
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<Comment> comments = new ArrayList<>();
-//
-//    // Likes relationship
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<Like> likes = new ArrayList<>();
-//
-//}
-
-
-
 package com.example.SocialMedia.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -87,7 +28,7 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+//    private LocalDateTime createdAt = LocalDateTime.now();
 
     private String profilePicture;
     private String bio;
@@ -110,5 +51,14 @@ public class User {
     // Likes relationship
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Like> likes = new ArrayList<>();
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_roles",  // Name of the join table
+            joinColumns = @JoinColumn(name = "user_id"),  // Column to join with the "User" entity
+            inverseJoinColumns = @JoinColumn(name = "role_id")  // Column to join with the "Role" entity
+    )
+    @JsonIgnore
+    private List<Role> roles = new ArrayList<>();
 
 }

@@ -2,6 +2,7 @@ package com.example.SocialMedia.services;
 
 import com.example.SocialMedia.dtos.LoginRequestDTO;
 import com.example.SocialMedia.dtos.UserDTO;
+import com.example.SocialMedia.entities.Role;
 import com.example.SocialMedia.entities.User;
 import com.example.SocialMedia.exceptions.DuplicateResourceException;
 import com.example.SocialMedia.exceptions.UserNotFoundException;
@@ -18,7 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
+
 
 import java.nio.file.AccessDeniedException;
 import java.util.List;
@@ -43,7 +44,8 @@ public class UserService  {
     @Autowired
     private AuthenticationManager authManager;
 
-
+    @Autowired
+    private RoleService roleService;
 
     @Autowired
     private RedisTemplate<String, UserDTO> redisTemplate; // Inject Redis
@@ -53,20 +55,26 @@ public class UserService  {
         if (userRepository.existsByUserName(user.getUserName())) {
             throw new DuplicateResourceException("Username already exists");
         }
+
+        Role userRole = roleService.findByName("USER");
         user.setPassword(new BCryptPasswordEncoder().encode(user.getPassword()));
+        user.getRoles().add(userRole);
+
         User savedUser = userRepository.save(user);
         return convertToDTO(savedUser);
     }
 
     public String verify(LoginRequestDTO loginRequestDTO) {
         User user = userRepository.findByUserName(loginRequestDTO.getUserName());
-        System.out.println("entered");
         Authentication authentication =
                 authManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequestDTO.getUserName(), loginRequestDTO.getPassword()));
-        System.out.println("middle");
         if(authentication.isAuthenticated()){
             System.out.println("auth success");
-            return jwtService.generateToken(user.getUserName());
+            List<String> roles = user.getRoles().stream()
+                    .map(role -> role.getName())
+                    .collect(Collectors.toList());
+
+            return jwtService.generateToken(user, user.getRoles());
         }
         System.out.println("exited");
         return "Wrong UserName or Password";

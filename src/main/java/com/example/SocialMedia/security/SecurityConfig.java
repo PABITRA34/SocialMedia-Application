@@ -21,7 +21,7 @@ public class SecurityConfig {
 
     @Autowired
     private UserDetailsService userDetailsService;
-
+//
     @Autowired
     private JwtFilter jwtFilter;
 
@@ -31,12 +31,13 @@ public class SecurityConfig {
                 .csrf(customizer->customizer.disable())
                 .authorizeHttpRequests(request->request
                         .requestMatchers("/public/**","/api/users/register","/api/users/login","/swagger-ui/**","/v3/api-docs/**","/swagger-ui.html","api/users/getAll","api/users/get/*").permitAll()
+                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/user/**").hasAnyAuthority("USER", "ADMIN")
                         .anyRequest().authenticated())
 
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
-
     }
 
     @Bean
