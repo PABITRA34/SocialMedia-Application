@@ -16,12 +16,12 @@ public class CommentController {
     @Autowired
     private CommentService commentService;
 
-    @PostMapping("/add/{userId}/{postId}")
-    public ResponseEntity<CommentDTO> addComment(@PathVariable Long userId, @PathVariable Long postId, @RequestBody CommentDTO commentDTO){
-        return ResponseEntity.ok(commentService.addComment(userId, postId, commentDTO));
+    @PostMapping("/add/{postId}")
+    public ResponseEntity<CommentDTO> addComment( @PathVariable Long postId, @RequestBody CommentDTO commentDTO){
+        return ResponseEntity.ok(commentService.addComment(postId, commentDTO));
     }
 
-    @GetMapping("/post/{postId}")
+    @GetMapping("/getComments/{postId}")
     public ResponseEntity<List<CommentDTO>> getCommentsByPost(@PathVariable Long postId){
         return ResponseEntity.ok(commentService.getCommentsByPost(postId));
     }
@@ -31,7 +31,7 @@ public class CommentController {
         return ResponseEntity.ok(commentService.updateComment(commentId, updatedCommentDTO));
     }
 
-    @DeleteMapping("/{commentId}")
+    @DeleteMapping("/delete/{commentId}")
     public ResponseEntity<String> deleteCommentById(@PathVariable Long commentId){
         return ResponseEntity.ok(commentService.deleteComment(commentId));
     }

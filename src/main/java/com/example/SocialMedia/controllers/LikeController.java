@@ -17,19 +17,19 @@ public class LikeController {
     @Autowired
     private LikeService likeService;
 
-    @PostMapping("/{userId}/{postId}")
-    public ResponseEntity<String> likePost(@PathVariable Long userId, @PathVariable Long postId){
-        likeService.likePost(userId,postId);
+    @PostMapping("/post/{postId}")
+    public ResponseEntity<String> likePost( @PathVariable Long postId){
+        likeService.likePost(postId);
         return ResponseEntity.ok("Post Liked Successfully");
     }
 
-    @DeleteMapping("/{userId}/{postId}")
-    public ResponseEntity<String> unlikePost(@PathVariable Long userId, @PathVariable Long postId){
-        likeService.unlikePost(userId, postId);
+    @DeleteMapping("/post/unlike/{postId}")
+    public ResponseEntity<String> unlikePost( @PathVariable Long postId){
+        likeService.unlikePost( postId);
         return ResponseEntity.ok("Post Unliked Successfully");
     }
 
-    @GetMapping("/post/{postId}")
+    @GetMapping("/post/getAll-likes/{postId}")
     public ResponseEntity<List<LikeDTO>> getLikesByPost(@PathVariable Long postId){
         List<LikeDTO> likes = likeService.getLikesByPost(postId);
         return ResponseEntity.ok(likes);

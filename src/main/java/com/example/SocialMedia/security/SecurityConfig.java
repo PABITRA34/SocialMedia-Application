@@ -30,7 +30,7 @@ public class SecurityConfig {
         return http
                 .csrf(customizer->customizer.disable())
                 .authorizeHttpRequests(request->request
-                        .requestMatchers("/public/**","/api/users/register","/api/users/login","/swagger-ui/**","/v3/api-docs/**","/swagger-ui.html","api/users/getAll","api/users/get/*").permitAll()
+                        .requestMatchers("/public/**","/api/users/register","/api/users/login","/swagger-ui/**","/v3/api-docs/**","/swagger-ui.html","api/users/getAll","api/users/get/*","/api/posts/getAllPosts","/api/posts/user/**","api/likes/post/getAll-likes/**","/api/likes/post/*").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/user/**").hasAnyAuthority("USER", "ADMIN")
                         .anyRequest().authenticated())

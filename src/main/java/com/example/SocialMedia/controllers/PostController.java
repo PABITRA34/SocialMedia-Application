@@ -19,22 +19,24 @@ public class PostController {
         return postService.createPost(postDTO);
     }
 
-    @GetMapping
+    @GetMapping("/getAllPosts")
     public List<PostDTO> getAllPosts(){
         return postService.getAllPosts();
     }
 
     @GetMapping("/user/{userId}")
-//    public List<PostDTO> getPostByUser(@PathVariable Long userId){
-//        return postService.getPostsByUserId(userId);
-//    }
     public PostDTO getPostById(@PathVariable Long userId){
         return postService.getPostsByUserId(userId);
     }
 
-    @DeleteMapping("/{postId}")
+    @DeleteMapping("/delete/{postId}")
     public String deletePostById(@PathVariable Long postId){
         postService.deletePost(postId);
         return "Post Deleted Successfully";
+    }
+
+    @PutMapping("/edit/{pId}")
+    public PostDTO editPost(@PathVariable Long pId, @RequestBody PostDTO postDTO){
+      return postService.editPost(pId, postDTO);
     }
 }

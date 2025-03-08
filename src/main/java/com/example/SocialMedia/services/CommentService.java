@@ -4,13 +4,13 @@ import com.example.SocialMedia.dtos.CommentDTO;
 import com.example.SocialMedia.entities.Comment;
 import com.example.SocialMedia.entities.Post;
 import com.example.SocialMedia.entities.User;
-import com.example.SocialMedia.exceptions.CommentNotFound;
-import com.example.SocialMedia.exceptions.PostNotFoundException;
+import com.example.SocialMedia.exceptions.CommentNotFoundExcetion;
 import com.example.SocialMedia.exceptions.PostNotFoundException;
 import com.example.SocialMedia.exceptions.UserNotFoundException;
 import com.example.SocialMedia.repository.CommentRepository;
 import com.example.SocialMedia.repository.PostRepository;
 import com.example.SocialMedia.repository.UserRepository;
+import com.example.SocialMedia.utils.SecurityUtil;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -33,13 +33,18 @@ public class CommentService {
     @Autowired
     private ModelMapper modelMapper;
 
-    public CommentDTO addComment(Long userId, Long postId, CommentDTO commentDTO){
-        User user =  userRepository.findById(userId).
-                orElseThrow(()->new UserNotFoundException("User not found"));
+    @Autowired
+    private SecurityUtil securityUtil;
+
+    public CommentDTO addComment(Long postId, CommentDTO commentDTO){
+        User user = securityUtil.getAuthenticatedUser();
+
         Post post = postRepository.findById(postId).
                 orElseThrow(()-> new PostNotFoundException("Post doesn't exist"));
 
         Comment comment = modelMapper.map(commentDTO, Comment.class);
+        comment.setUser(user);
+        comment.setPost(post);
 
         Comment savedComment = commentRepository.save(comment);
         return convertToDTO(savedComment);
@@ -56,14 +61,14 @@ public class CommentService {
 
     public CommentDTO updateComment(Long commentId, CommentDTO updatedCommentDTO){
         Comment comment = commentRepository.findById(commentId).
-                orElseThrow(()->new CommentNotFound("Comment Not Found"));
+                orElseThrow(()->new CommentNotFoundExcetion("Comment Not Found"));
         comment.setContent(updatedCommentDTO.getContent());
         Comment updatedComment = commentRepository.save(comment);
         return convertToDTO(updatedComment);
     }
 
     public String  deleteComment(Long commentId){
-        Comment comment = commentRepository.findById(commentId).orElseThrow(()-> new CommentNotFound("Comment Not Found"));
+        Comment comment = commentRepository.findById(commentId).orElseThrow(()-> new CommentNotFoundExcetion("Comment Not Found"));
         commentRepository.delete(comment);
         return "Comment deleted successfully";
     }
@@ -72,7 +77,7 @@ public class CommentService {
 
 
     private CommentDTO convertToDTO(Comment comment){
-        return new CommentDTO(comment.getId(), comment.getUser().getId(), comment.getPost().getId(), comment.getContent(), comment.getCreatedAt());
+        return new CommentDTO(comment.getId(),  comment.getContent(), comment.getCreatedAt());
     }
 
 

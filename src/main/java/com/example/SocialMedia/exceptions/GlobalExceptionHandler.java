@@ -27,6 +27,27 @@ public class GlobalExceptionHandler {
         problemDetail.setDetail("User Not Found");
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
     }
+    @ExceptionHandler(PostNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handlePostNotFoundException(PostNotFoundException ex){
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        problemDetail.setDetail("Post Not Found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
+    }
+
+
+    @ExceptionHandler(LikeNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleLikeNotFoundException(LikeNotFoundException ex){
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        problemDetail.setDetail("Like Not Found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
+    }
+
+    @ExceptionHandler(CommentNotFoundExcetion.class)
+    public ResponseEntity<ProblemDetail> CommentNotFoundException(CommentNotFoundExcetion ex){
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        problemDetail.setDetail("Comment Not Found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleGenericException(Exception e) {
@@ -34,5 +55,4 @@ public class GlobalExceptionHandler {
                 .body(ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR,
                         "Something went wrong"));
     }
-
 }

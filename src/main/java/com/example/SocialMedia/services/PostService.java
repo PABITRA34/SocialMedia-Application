@@ -9,6 +9,8 @@ import org.hibernate.Cache;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,15 +38,18 @@ public class PostService {
 
     @Transactional
     public synchronized PostDTO createPost(PostDTO postDTO) {
-        // Validate if user exists
-        User user = userRepository.findById(postDTO.getUserId())
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        // Get authenticated user
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = userRepository.findByUserName(authentication.getName());
 
+        // Map DTO to entity and set user
         Post post = modelMapper.map(postDTO, Post.class);
+        post.setUser(user);  // Associate user with post
 
+        // Save post and cache it
         Post savedPost = postRepository.save(post);
-        //cache the post
-//        savePostInCache(savedPost);
+        savePostInCache(savedPost);
+
         return convertToDTO(savedPost);
     }
 
@@ -86,7 +91,34 @@ public class PostService {
     }
 
     private PostDTO convertToDTO(Post post) {
-        return new PostDTO(post.getId(), post.getUser().getId(), post.getContent(), post.getImageUrl());
+        return new PostDTO(post.getId(),post.getContent(), post.getImageUrl());
+    }
+
+    public PostDTO editPost(Long pId, PostDTO postDTO) {
+        // Fetch the existing post from the database
+        Post post = postRepository.findById(pId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        // Get the authenticated user
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = userRepository.findByUserName(authentication.getName());
+
+        // Ensure the authenticated user is the owner of the post
+        if (!post.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("You are not authorized to edit this post.");
+        }
+
+        // Update post fields
+        if (postDTO.getContent() != null) {
+            post.setContent(postDTO.getContent());
+        }
+        if (postDTO.getImageUrl() != null) {
+            post.setImageUrl(postDTO.getImageUrl());
+        }
+        // Save the updated post
+        Post updatedPost = postRepository.save(post);
+        savePostInCache(updatedPost);
+        return convertToDTO(updatedPost);
     }
 
 }

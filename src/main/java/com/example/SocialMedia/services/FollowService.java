@@ -5,6 +5,7 @@ import com.example.SocialMedia.entities.User;
 import com.example.SocialMedia.exceptions.UserNotFoundException;
 import com.example.SocialMedia.repository.FollowRepository;
 import com.example.SocialMedia.repository.UserRepository;
+import com.example.SocialMedia.utils.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,10 +19,13 @@ public class FollowService {
     @Autowired
     private FollowRepository followRepository;
 
+    @Autowired
+    private SecurityUtil securityUtil;
+
     @Transactional
-    public String followUser(Long followerId, Long followingId) {
-        User follower = userRepository.findById(followerId)
-                .orElseThrow(() -> new UserNotFoundException("Follower not found"));
+    public String followUser(Long followingId) {
+        User user = securityUtil.getAuthenticatedUser();
+        User follower = userRepository.findByUserName(user.getUserName());
         User following = userRepository.findById(followingId)
                 .orElseThrow(() -> new UserNotFoundException("User to follow not found"));
 
@@ -45,8 +49,9 @@ public class FollowService {
     }
 
     @Transactional
-    public String unfollowUser(Long followerId, Long followingId) {
-        User follower = userRepository.findById(followerId)
+    public String unfollowUser( Long followingId) {
+        User user = securityUtil.getAuthenticatedUser();
+        User follower = userRepository.findById(user.getId())
                 .orElseThrow(() -> new UserNotFoundException("Follower not found"));
         User following = userRepository.findById(followingId)
                 .orElseThrow(() -> new UserNotFoundException("User to unfollow not found"));

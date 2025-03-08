@@ -12,6 +12,8 @@ import com.example.SocialMedia.repository.PostRepository;
 import com.example.SocialMedia.repository.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,9 +34,10 @@ public class LikeService {
     @Autowired
     private ModelMapper modelMapper;
 
-    public void likePost(Long userId, Long postId){
-         User user = userRepository.findById(userId).
-                 orElseThrow(()-> new UserNotFoundException("user not found"));
+    public void likePost(Long postId){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userName = authentication.getName();
+         User user = userRepository.findByUserName(userName);
          Post post = postRepository.findById(postId).
                  orElseThrow(()-> new PostNotFoundException("Post not found"));
 
@@ -49,15 +52,14 @@ public class LikeService {
          likeRepository.save(like);
     }
 
-    public void unlikePost(Long userId, Long postId){
-        User user = userRepository.findById(userId).
-                orElseThrow(()-> new UserNotFoundException("user not found"));
+    public void unlikePost(Long postId){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userName = authentication.getName();
+        User user = userRepository.findByUserName(userName);
         Post post = postRepository.findById(postId).
                 orElseThrow(()-> new PostNotFoundException("Post not found"));
-
         Like like  = likeRepository.findByUserAndPost(user, post).
                 orElseThrow(()-> new LikeNotFoundException("Like not found"));
-
         likeRepository.delete(like);
     }
 
